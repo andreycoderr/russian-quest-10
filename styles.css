@@ -615,7 +615,7 @@ b { font-weight: 600; color: var(--text-strong); }
    ============================================================ */
 .cta-banner {
   display: inline-flex; align-items: center; gap: 14px;
-  margin: 4px auto 4px; max-width: 100%;
+  margin: 0 auto clamp(18px, 3vw, 30px); max-width: 100%;
   padding: 12px 20px 12px 14px; border-radius: 100px;
   text-decoration: none; color: #fff;
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
