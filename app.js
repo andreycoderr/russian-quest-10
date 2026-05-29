@@ -388,7 +388,7 @@
   function confetti(intensity) {
     if (reduceMotion) return;
     sizeCanvas();
-    const colors = ["#f3c969", "#e0a23f", "#8b7bf0", "#54d6d0", "#5fdca0", "#ffffff"];
+    const colors = ["#a855f7", "#ec4899", "#22d3ee", "#a3e635", "#f472b6", "#ffd166", "#ffffff"];
     const n = Math.round(140 * intensity);
     for (let i = 0; i < n; i++) {
       parts.push({
@@ -501,7 +501,7 @@
     x.strokeStyle = "rgba(150,110,40,.45)"; x.lineWidth = 2; x.strokeRect(46, 46, W - 92, H - 92);
     x.textAlign = "center";
     x.fillStyle = "#9a6a1f"; x.font = "600 22px Manrope, Inter, sans-serif";
-    x.fillText("УЧИТЕЛЬСКАЯ · ПОДГОТОВКА К ЕГЭ", W / 2, 122);
+    x.fillText("ПОДГОТОВКА К ОГЭ И ЕГЭ С АРИНОЙ", W / 2, 122);
     x.fillStyle = "#7a4e12"; x.font = "700 94px Lora, Georgia, serif";
     x.fillText("Грамота", W / 2, 232);
     x.fillStyle = "#5c5142"; x.font = "400 30px Inter, sans-serif";
