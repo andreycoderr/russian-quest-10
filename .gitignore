@@ -1,0 +1,7 @@
+# local dev tooling (PowerShell static server, editor config)
+.claude/
+
+# OS / editor cruft
+Thumbs.db
+.DS_Store
+*.log
