@@ -53,6 +53,7 @@
   if (!progress.settings) progress.settings = {};
   if (typeof progress.settings.threshold !== "number") progress.settings.threshold = 0.5;
   if (typeof progress.settings.name !== "string") progress.settings.name = "";
+  if (typeof progress.teacher !== "boolean") progress.teacher = false;
 
   // a station is "passed" once you score at least the chosen share of its stars
   function passReq(total) { return Math.max(1, Math.ceil(total * progress.settings.threshold)); }
@@ -60,8 +61,8 @@
     const s = STATIONS[index];
     return (progress.best[s.id] || 0) >= passReq(s.questions.length);
   }
-  // the next station unlocks only after the previous one is passed (≥ half stars)
-  function isUnlocked(index) { return index === 0 || isPassed(index - 1); }
+  // the next station unlocks after the previous is passed — or always, in teacher mode
+  function isUnlocked(index) { return progress.teacher || index === 0 || isPassed(index - 1); }
   function earnedStars() { return STATIONS.reduce((n, s) => n + (progress.best[s.id] || 0), 0); }
   function firstPlayableIndex() {
     for (let i = 0; i < STATIONS.length; i++) {
@@ -141,6 +142,41 @@
 
     renderSettings();
     renderFinale();
+    updateTeacherBtn();
+  }
+
+  // ---------- teacher access ----------
+  function updateTeacherBtn() {
+    const b = $("#teacher-btn");
+    if (!b) return;
+    b.classList.toggle("on", !!progress.teacher);
+    b.textContent = progress.teacher ? "🔑 Учитель: доступ открыт" : "🔑 Кнопка учителя";
+  }
+  function openTeacherModal() {
+    $("#teacher-locked").hidden = !!progress.teacher;
+    $("#teacher-unlocked").hidden = !progress.teacher;
+    $("#teacher-error").hidden = true;
+    const code = $("#teacher-code"); if (code) code.value = "";
+    $("#teacher-modal").hidden = false;
+    if (!progress.teacher && code) setTimeout(() => code.focus(), 50);
+  }
+  function closeTeacherModal() { $("#teacher-modal").hidden = true; }
+  function submitTeacherCode() {
+    const val = ($("#teacher-code").value || "").trim();
+    if (val === "1106") {
+      progress.teacher = true; saveProgress();
+      closeTeacherModal(); renderMap();
+      toast("Доступ учителя открыт — все станции разблокированы");
+    } else {
+      const e = $("#teacher-error");
+      e.hidden = false; e.style.animation = "none"; void e.offsetWidth; e.style.animation = "";
+      const code = $("#teacher-code"); code.value = ""; code.focus();
+    }
+  }
+  function disableTeacher() {
+    progress.teacher = false; saveProgress();
+    closeTeacherModal(); renderMap();
+    toast("Доступ учителя закрыт");
   }
 
   function allPassed() { return STATIONS.every((_, i) => isPassed(i)); }
@@ -161,7 +197,7 @@
     if (!el) return;
     const passedCount = STATIONS.filter((_, i) => isPassed(i)).length;
     const earned = earnedStars();
-    if (passedCount === STATIONS.length) {
+    if (progress.teacher || passedCount === STATIONS.length) {
       el.innerHTML = `
         <button type="button" class="finale-card unlocked" id="finale-card">
           <span class="finale-trophy">🏆</span>
@@ -649,11 +685,21 @@
   $("#result-map").addEventListener("click", goMap);
   $("#reset-progress").addEventListener("click", () => {
     if (confirm("Сбросить весь прогресс квеста? Собранные звёзды и открытые станции обнулятся.")) {
-      progress = { best: {}, done: {}, settings: { threshold: progress.settings.threshold, name: progress.settings.name } };
+      progress = { best: {}, done: {}, settings: { threshold: progress.settings.threshold, name: progress.settings.name }, teacher: progress.teacher };
       saveProgress();
       renderMap();
     }
   });
+
+  // teacher access modal
+  $("#teacher-btn").addEventListener("click", openTeacherModal);
+  $("#teacher-submit").addEventListener("click", submitTeacherCode);
+  $("#teacher-cancel").addEventListener("click", closeTeacherModal);
+  $("#teacher-close").addEventListener("click", closeTeacherModal);
+  $("#teacher-done").addEventListener("click", closeTeacherModal);
+  $("#teacher-disable").addEventListener("click", disableTeacher);
+  $("#teacher-code").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); submitTeacherCode(); } });
+  $("#teacher-modal").addEventListener("click", (e) => { if (e.target === $("#teacher-modal")) closeTeacherModal(); });
 
   // threshold selector
   document.querySelectorAll("#set-options button").forEach(b => {

@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&family=Lora:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap" rel="stylesheet" />
   <title>Русский язык · 10 класс — квест-тренажёр</title>
-  <link rel="stylesheet" href="styles.css?v=9" />
+  <link rel="stylesheet" href="styles.css?v=10" />
 </head>
 <body>
   <div class="aurora" aria-hidden="true">
@@ -21,6 +21,10 @@
 
     <!-- ===== MAP / HOME ===== -->
     <section class="view view-map" id="view-map">
+      <div class="topbar">
+        <button class="teacher-btn" id="teacher-btn" type="button">🔑 Кнопка учителя</button>
+      </div>
+
       <a class="cta-banner cta-top" href="https://t.me/ArinaGalitskaya" target="_blank" rel="noopener" aria-label="Записаться на занятие с Ариной в Telegram">
         <span class="cta-ico" aria-hidden="true">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M9.04 15.66 8.85 19.4c.27 0 .39-.11.53-.25l1.27-1.21 2.63 1.93c.48.27.83.13.95-.45l1.72-8.07.01-.01c.16-.74-.27-1.03-.74-.85L4.06 14.36c-.73.28-.72.69-.12.87l2.6.81 6.05-3.81c.29-.18.55-.08.34.1z"/></svg>
@@ -191,10 +195,33 @@
 
   </div>
 
+  <div class="tmodal" id="teacher-modal" hidden>
+    <div class="tmodal-card">
+      <button class="tmodal-x" id="teacher-close" type="button" aria-label="Закрыть">✕</button>
+      <h3 class="tmodal-title">🔑 Кнопка учителя</h3>
+      <div id="teacher-locked">
+        <p class="tmodal-text">Введите код, чтобы открыть доступ ко&nbsp;всем станциям квеста.</p>
+        <input class="tmodal-input" id="teacher-code" type="password" inputmode="numeric" autocomplete="off" placeholder="код" />
+        <p class="tmodal-error" id="teacher-error" hidden>Неверный код. Попробуйте ещё&nbsp;раз.</p>
+        <div class="tmodal-actions">
+          <button class="btn btn-primary" id="teacher-submit" type="button">Открыть доступ</button>
+          <button class="btn btn-ghost" id="teacher-cancel" type="button">Отмена</button>
+        </div>
+      </div>
+      <div id="teacher-unlocked" hidden>
+        <p class="tmodal-text">✅ Доступ учителя активен — все станции открыты.</p>
+        <div class="tmodal-actions">
+          <button class="btn btn-soft" id="teacher-disable" type="button">Закрыть доступ</button>
+          <button class="btn btn-ghost" id="teacher-done" type="button">Готово</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast" hidden></div>
   <canvas id="confetti" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=9"></script>
-  <script src="app.js?v=9"></script>
+  <script src="data.js?v=10"></script>
+  <script src="app.js?v=10"></script>
 </body>
 </html>

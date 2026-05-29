@@ -137,6 +137,54 @@ b { font-weight: 600; color: var(--text-strong); }
 @keyframes viewIn { from { opacity: 0; } to { opacity: 1; } }
 
 /* ---------- BRAND BAR ---------- */
+/* ---------- TOP BAR + TEACHER BUTTON ---------- */
+.topbar { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 8px; }
+.teacher-btn {
+  font: inherit; font-family: var(--font-ui); font-weight: 700; font-size: 0.8rem;
+  color: var(--muted); cursor: pointer;
+  padding: 7px 14px; border: 1px solid var(--line); border-radius: 100px;
+  background: var(--surface); backdrop-filter: blur(8px);
+  transition: color 0.2s, border-color 0.2s, background 0.2s, transform 0.15s;
+}
+.teacher-btn:hover { color: var(--text-strong); border-color: var(--line-strong); transform: translateY(-1px); }
+.teacher-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.teacher-btn.on { color: var(--good); border-color: var(--good); background: var(--good-bg); }
+
+/* teacher modal */
+.tmodal {
+  position: fixed; inset: 0; z-index: 90;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px; background: rgba(6, 4, 16, 0.6); backdrop-filter: blur(6px);
+  animation: viewIn 0.25s ease;
+}
+.tmodal-card {
+  position: relative; width: 100%; max-width: 380px; text-align: center;
+  padding: 28px 24px 24px; border-radius: var(--radius);
+  background: var(--surface-3); border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow);
+  animation: resultIn 0.3s cubic-bezier(0.2,0.7,0.2,1);
+}
+@media (prefers-color-scheme: dark) { .tmodal-card { background: #18122e; } }
+.tmodal-x {
+  position: absolute; top: 12px; right: 12px;
+  width: 32px; height: 32px; border-radius: 50%;
+  border: none; background: var(--surface-2); color: var(--muted);
+  font-size: 0.9rem; cursor: pointer; transition: color 0.2s, background 0.2s;
+}
+.tmodal-x:hover { color: var(--text-strong); background: var(--line-strong); }
+.tmodal-title { font-family: var(--font-display); font-weight: 700; font-size: 1.3rem; color: var(--text-strong); margin: 0 0 10px; }
+.tmodal-text { color: var(--muted); font-size: 0.95rem; margin: 0 0 16px; }
+.tmodal-input {
+  width: 100%; text-align: center; letter-spacing: 0.3em;
+  font-family: var(--font-ui); font-size: 1.3rem; font-weight: 700;
+  padding: 12px 14px; margin-bottom: 12px;
+  color: var(--text-strong); background: var(--surface);
+  border: 1px solid var(--line-strong); border-radius: var(--radius-sm); outline: none;
+}
+.tmodal-input:focus { border-color: var(--accent); }
+.tmodal-error { color: var(--bad); font-size: 0.88rem; font-weight: 600; margin: 0 0 12px; animation: shake 0.4s; }
+.tmodal-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+
 .brandbar {
   display: flex;
   align-items: center;
