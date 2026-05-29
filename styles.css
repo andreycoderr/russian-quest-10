@@ -290,6 +290,7 @@ b { font-weight: 600; color: var(--text-strong); }
 @media (prefers-color-scheme: light) { .sc-tag { color: hsl(var(--hue) 70% 30%); } }
 .sc-num { font-family: var(--font-ui); color: var(--muted); font-weight: 600; letter-spacing: 0.02em; }
 .sc-status { margin-left: auto; color: var(--good); font-weight: 700; font-size: 0.74rem; }
+.sc-status.retry { color: var(--accent); }
 .station-card.is-locked .sc-status { color: var(--faint); }
 .sc-title { font-family: var(--font-display); font-weight: 600; font-size: 1.24rem; line-height: 1.2; margin: 4px 0 0; color: var(--text-strong); }
 .sc-sub { font-size: 0.88rem; color: var(--muted); margin: 0; flex-grow: 1; }

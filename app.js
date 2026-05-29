@@ -49,13 +49,20 @@
   }
   let progress = loadProgress();
 
-  function isUnlocked(index) { return index === 0 || !!progress.done[STATIONS[index - 1].id]; }
+  // a station is "passed" once you score at least half of its stars
+  function passReq(total) { return Math.ceil(total / 2); }
+  function isPassed(index) {
+    const s = STATIONS[index];
+    return 2 * (progress.best[s.id] || 0) >= s.questions.length;
+  }
+  // the next station unlocks only after the previous one is passed (≥ half stars)
+  function isUnlocked(index) { return index === 0 || isPassed(index - 1); }
   function earnedStars() { return STATIONS.reduce((n, s) => n + (progress.best[s.id] || 0), 0); }
   function firstPlayableIndex() {
     for (let i = 0; i < STATIONS.length; i++) {
-      if (isUnlocked(i) && !progress.done[STATIONS[i].id]) return i;
+      if (isUnlocked(i) && !isPassed(i)) return i; // first reachable station not yet passed
     }
-    return 0; // everything done → start from the beginning
+    return STATIONS.length - 1; // everything passed → last station
   }
 
   // ---------- views ----------
@@ -91,11 +98,12 @@
     STATIONS.forEach((s, i) => {
       const unlocked = isUnlocked(i);
       const done = !!progress.done[s.id];
+      const passed = isPassed(i);
       const best = progress.best[s.id] || 0;
       const total = s.questions.length;
 
       const card = document.createElement(unlocked ? "button" : "div");
-      card.className = "station-card" + (unlocked ? "" : " is-locked") + (done ? " is-done" : "");
+      card.className = "station-card" + (unlocked ? "" : " is-locked") + (passed ? " is-done" : "");
       card.style.setProperty("--hue", s.hue);
       card.style.setProperty("--d", (i * 0.05) + "s");
       if (unlocked) {
@@ -105,11 +113,15 @@
         card.setAttribute("aria-disabled", "true");
       }
       const pct = total ? Math.round((best / total) * 100) : 0;
+      const status = passed ? '<span class="sc-status ok">✓ пройдена</span>'
+        : (unlocked && done) ? '<span class="sc-status retry">↻ повторить</span>'
+        : (!unlocked) ? '<span class="sc-status">🔒</span>' : "";
+      const prevTotal = i > 0 ? STATIONS[i - 1].questions.length : 0;
       card.innerHTML = `
         <div class="sc-top">
           <span class="sc-tag">${s.tag}</span>
           <span class="sc-num">Станция&nbsp;${i + 1}</span>
-          <span class="sc-status">${done ? "✓ пройдена" : unlocked ? "" : "🔒"}</span>
+          ${status}
         </div>
         <h3 class="sc-title">${s.title}</h3>
         <p class="sc-sub">${s.subtitle}</p>
@@ -117,7 +129,7 @@
           <div class="sc-bar"><span style="width:${pct}%"></span></div>
           <span class="sc-stars">${best}/${total} ⭐</span>
         </div>
-        ${unlocked ? "" : `<p class="sc-lock-note">Откроется после станции&nbsp;${i}</p>`}
+        ${unlocked ? "" : `<p class="sc-lock-note">🔒 Наберите ≥&nbsp;${passReq(prevTotal)} из&nbsp;${prevTotal}&nbsp;⭐ на станции&nbsp;${i}</p>`}
       `;
       grid.appendChild(card);
     });
@@ -283,28 +295,36 @@
 
     const isLast = index === STATIONS.length - 1;
     const pct = correct / total;
-    let badge = "🌱", title = "Станция пройдена";
-    if (pct === 1) { badge = "🏆"; title = "Безупречно!"; }
+    const req = passReq(total);
+    const passed = isPassed(index); // based on best score (updated above)
+
+    let badge, title;
+    if (!passed) { badge = "🔁"; title = "Почти получилось!"; }
+    else if (pct === 1) { badge = "🏆"; title = "Безупречно!"; }
     else if (pct >= 0.7) { badge = "⭐"; title = "Отличная работа!"; }
-    else if (pct >= 0.4) { badge = "👍"; title = "Хороший заход"; }
+    else { badge = "👍"; title = "Станция пройдена!"; }
 
     $("#result-badge").textContent = badge;
     $("#result-title").textContent = title;
     $("#result-score").innerHTML =
       `<b>${correct}</b> из <b>${total}</b> ${plural(total, "звезды", "звёзд", "звёзд")} на станции «${station.title}»`;
 
-    let sub = "";
-    if (pct === 1) sub = "Все ответы верны — тема освоена на отлично.";
-    else if (pct >= 0.7) sub = "Почти всё верно. Перечитай объяснения к промахам — и будет идеально.";
-    else sub = "Разбери объяснения и пройди станцию заново: с каждым разом будет легче.";
-    if (!isLast) sub += " Открыта следующая станция!";
-    else sub += " Это была последняя станция квеста!";
+    let sub;
+    if (!passed) {
+      sub = `Чтобы открыть следующую станцию, наберите не меньше ${req} из ${total} ⭐. Загляни в объяснения и попробуй ещё раз — получится!`;
+    } else {
+      if (pct === 1) sub = "Все ответы верны — тема освоена на отлично.";
+      else if (pct >= 0.7) sub = "Почти всё верно. Перечитай объяснения к промахам — и будет идеально.";
+      else sub = "Порог пройден! Можно идти дальше или пройти заново для большего счёта.";
+      sub += isLast ? " Это была последняя станция квеста!" : " Открыта следующая станция!";
+    }
     $("#result-sub").textContent = sub;
 
-    $("#result-next").hidden = isLast;
+    // next station only when this one is passed (≥ half) and it isn't the last
+    $("#result-next").hidden = isLast || !passed;
 
     showView("result");
-    if (pct >= 0.7) confetti(pct === 1 ? 1 : 0.7);
+    if (passed && pct >= 0.7) confetti(pct === 1 ? 1 : 0.7);
   }
 
   // ============================================================
