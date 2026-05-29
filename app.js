@@ -48,12 +48,17 @@
     try { localStorage.setItem(STORE_KEY, JSON.stringify(progress)); } catch (e) { /* ignore */ }
   }
   let progress = loadProgress();
+  if (!progress.best) progress.best = {};
+  if (!progress.done) progress.done = {};
+  if (!progress.settings) progress.settings = {};
+  if (typeof progress.settings.threshold !== "number") progress.settings.threshold = 0.5;
+  if (typeof progress.settings.name !== "string") progress.settings.name = "";
 
-  // a station is "passed" once you score at least half of its stars
-  function passReq(total) { return Math.ceil(total / 2); }
+  // a station is "passed" once you score at least the chosen share of its stars
+  function passReq(total) { return Math.max(1, Math.ceil(total * progress.settings.threshold)); }
   function isPassed(index) {
     const s = STATIONS[index];
-    return 2 * (progress.best[s.id] || 0) >= s.questions.length;
+    return (progress.best[s.id] || 0) >= passReq(s.questions.length);
   }
   // the next station unlocks only after the previous one is passed (≥ half stars)
   function isUnlocked(index) { return index === 0 || isPassed(index - 1); }
@@ -66,7 +71,7 @@
   }
 
   // ---------- views ----------
-  const views = { map: $("#view-map"), station: $("#view-station"), result: $("#view-result") };
+  const views = { map: $("#view-map"), station: $("#view-station"), result: $("#view-result"), certificate: $("#view-certificate") };
   function showView(name) {
     Object.keys(views).forEach(k => { views[k].hidden = (k !== name); });
     window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
@@ -133,6 +138,52 @@
       `;
       grid.appendChild(card);
     });
+
+    renderSettings();
+    renderFinale();
+  }
+
+  function allPassed() { return STATIONS.every((_, i) => isPassed(i)); }
+
+  // ---------- settings (unlock threshold) ----------
+  function renderSettings() {
+    const th = progress.settings.threshold;
+    document.querySelectorAll("#set-options button").forEach(b => {
+      b.classList.toggle("active", Math.abs(parseFloat(b.dataset.th) - th) < 0.001);
+    });
+    const hint = $("#set-hint");
+    if (hint) hint.textContent = th >= 1 ? "нужны все звёзды станции (идеально)" : `нужно ≥ ${Math.round(th * 100)}% звёзд станции`;
+  }
+
+  // ---------- finale ----------
+  function renderFinale() {
+    const el = $("#finale");
+    if (!el) return;
+    const passedCount = STATIONS.filter((_, i) => isPassed(i)).length;
+    const earned = earnedStars();
+    if (passedCount === STATIONS.length) {
+      el.innerHTML = `
+        <button type="button" class="finale-card unlocked" id="finale-card">
+          <span class="finale-trophy">🏆</span>
+          <span class="finale-body">
+            <span class="finale-title">Финал открыт — получите грамоту!</span>
+            <span class="finale-sub">Все ${STATIONS.length} станций пройдены · ${earned}/${TOTAL_Q} ⭐. Оформите грамоту и отправьте результат репетитору.</span>
+          </span>
+          <span class="finale-go" aria-hidden="true">→</span>
+        </button>`;
+      $("#finale-card").addEventListener("click", showCertificate);
+    } else {
+      const pct = Math.round(passedCount / STATIONS.length * 100);
+      el.innerHTML = `
+        <div class="finale-card locked">
+          <span class="finale-trophy">🔒</span>
+          <span class="finale-body">
+            <span class="finale-title">Финал · грамота за весь квест</span>
+            <span class="finale-sub">Пройдено станций: ${passedCount} из ${STATIONS.length}. Пройдите все станции на выбранном пороге — и откроется грамота с экспортом результата.</span>
+            <span class="finale-bar"><span style="width:${pct}%"></span></span>
+          </span>
+        </div>`;
+    }
   }
 
   function rankFor(earned) {
@@ -373,6 +424,123 @@
   addEventListener("resize", () => { if (raf) sizeCanvas(); });
 
   // ============================================================
+  //  CERTIFICATE + EXPORT
+  // ============================================================
+  const QUEST_URL = "https://andreycoderr.github.io/russian-quest-10/";
+
+  function showCertificate() {
+    const earned = earnedStars();
+    const pct = TOTAL_Q ? Math.round(earned / TOTAL_Q * 100) : 0;
+    const rank = rankFor(earned);
+    $("#cert-stars").textContent = earned + "/" + TOTAL_Q;
+    $("#cert-pct").textContent = pct + "%";
+    $("#cert-rank").textContent = rank ? rank.title : "—";
+    $("#cert-name").value = progress.settings.name || "";
+    $("#cert-date").textContent = "Дата: " + new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
+    updateTgLink();
+    showView("certificate");
+    confetti(1);
+  }
+
+  function buildReport() {
+    const earned = earnedStars();
+    const pct = TOTAL_Q ? Math.round(earned / TOTAL_Q * 100) : 0;
+    const rank = rankFor(earned);
+    const name = (progress.settings.name || "").trim();
+    const lines = ["🏆 Грамота · Русский язык, 10 класс"];
+    if (name) lines.push("Ученик: " + name);
+    lines.push("Результат: " + earned + "/" + TOTAL_Q + " ⭐ (" + pct + "%)");
+    lines.push("Ранг: " + (rank ? rank.title : "—"));
+    lines.push("");
+    lines.push("По станциям:");
+    STATIONS.forEach((s, i) => lines.push((i + 1) + ". " + s.title + " — " + (progress.best[s.id] || 0) + "/" + s.questions.length));
+    lines.push("");
+    lines.push("Тренажёр «Учительская» · ЕГЭ 2026");
+    lines.push(QUEST_URL);
+    return lines.join("\n");
+  }
+
+  function updateTgLink() {
+    const a = $("#cert-tg");
+    if (a) a.href = "https://t.me/share/url?url=" + encodeURIComponent(QUEST_URL) + "&text=" + encodeURIComponent(buildReport());
+  }
+
+  let toastTimer = null;
+  function toast(msg) {
+    const t = $("#toast");
+    if (!t) return;
+    t.textContent = msg; t.hidden = false;
+    void t.offsetWidth; t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.classList.remove("show"); setTimeout(() => { t.hidden = true; }, 300); }, 2800);
+  }
+
+  function copyReport() {
+    const text = buildReport();
+    const ok = () => toast("Результат скопирован — вставьте его в чат с репетитором");
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(ok).catch(() => fallbackCopy(text, ok));
+    } else { fallbackCopy(text, ok); }
+  }
+  function fallbackCopy(text, cb) {
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try { document.execCommand("copy"); cb(); } catch (e) { toast("Не удалось скопировать автоматически"); }
+    ta.remove();
+  }
+
+  function downloadPNG() {
+    const W = 1240, H = 877;
+    const c = document.createElement("canvas"); c.width = W; c.height = H;
+    const x = c.getContext("2d");
+    const g = x.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, "#fffdf6"); g.addColorStop(1, "#f1e6cb");
+    x.fillStyle = g; x.fillRect(0, 0, W, H);
+    x.strokeStyle = "rgba(150,110,40,.85)"; x.lineWidth = 6; x.strokeRect(28, 28, W - 56, H - 56);
+    x.strokeStyle = "rgba(150,110,40,.45)"; x.lineWidth = 2; x.strokeRect(46, 46, W - 92, H - 92);
+    x.textAlign = "center";
+    x.fillStyle = "#9a6a1f"; x.font = "600 22px Manrope, Inter, sans-serif";
+    x.fillText("УЧИТЕЛЬСКАЯ · ПОДГОТОВКА К ЕГЭ", W / 2, 122);
+    x.fillStyle = "#7a4e12"; x.font = "700 94px Lora, Georgia, serif";
+    x.fillText("Грамота", W / 2, 232);
+    x.fillStyle = "#5c5142"; x.font = "400 30px Inter, sans-serif";
+    x.fillText("награждается", W / 2, 300);
+    const name = ((progress.settings.name || "").trim()) || "Ученик";
+    x.fillStyle = "#2c2415"; x.font = "italic 700 56px Lora, Georgia, serif";
+    x.fillText(name, W / 2, 380);
+    x.fillStyle = "#5c5142"; x.font = "400 30px Inter, sans-serif";
+    x.fillText("за прохождение квеста", W / 2, 446);
+    x.fillStyle = "#7a4e12"; x.font = "600 38px Lora, Georgia, serif";
+    x.fillText("«Русский язык. 10 класс»", W / 2, 498);
+    const earned = earnedStars(), pct = TOTAL_Q ? Math.round(earned / TOTAL_Q * 100) : 0, rank = rankFor(earned);
+    const cx = [W / 2 - 320, W / 2, W / 2 + 320];
+    const vals = [earned + "/" + TOTAL_Q, pct + "%", rank ? rank.title : "—"];
+    const labs = ["ЗВЁЗД", "ВЕРНЫХ", "РАНГ"];
+    vals.forEach((v, i) => {
+      x.fillStyle = "#7a4e12"; x.font = (i === 2 ? "700 30px" : "700 44px") + " Lora, Georgia, serif";
+      x.fillText(v, cx[i], 612);
+      x.fillStyle = "#9a7d4a"; x.font = "600 17px Manrope, Inter, sans-serif";
+      x.fillText(labs[i], cx[i], 648);
+    });
+    x.fillStyle = "#7a6a4a"; x.font = "400 24px Inter, sans-serif";
+    x.fillText("Дата: " + new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" }), W / 2, 742);
+    const sg = x.createRadialGradient(W - 200, H - 168, 8, W - 182, H - 150, 58);
+    sg.addColorStop(0, "#e8b85c"); sg.addColorStop(1, "#a9701e");
+    x.beginPath(); x.arc(W - 182, H - 150, 58, 0, Math.PI * 2); x.fillStyle = sg; x.fill();
+    x.fillStyle = "#fff"; x.font = "44px Georgia, serif"; x.fillText("★", W - 182, H - 134);
+    c.toBlob(function (blob) {
+      if (!blob) { toast("Не удалось создать картинку"); return; }
+      const a = document.createElement("a");
+      a.download = "gramota-russkiy-10" + (name !== "Ученик" ? "-" + name.replace(/\s+/g, "_") : "") + ".png";
+      a.href = URL.createObjectURL(blob);
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+      toast("Грамота сохранена картинкой — отправьте её репетитору");
+    }, "image/png");
+  }
+
+  // ============================================================
   //  EVENTS (attached once — robust)
   // ============================================================
   $("#next-btn").addEventListener("click", nextQuestion);
@@ -383,11 +551,30 @@
   $("#result-map").addEventListener("click", goMap);
   $("#reset-progress").addEventListener("click", () => {
     if (confirm("Сбросить весь прогресс квеста? Собранные звёзды и открытые станции обнулятся.")) {
-      progress = { best: {}, done: {} };
+      progress = { best: {}, done: {}, settings: { threshold: progress.settings.threshold, name: progress.settings.name } };
       saveProgress();
       renderMap();
     }
   });
+
+  // threshold selector
+  document.querySelectorAll("#set-options button").forEach(b => {
+    b.addEventListener("click", () => {
+      progress.settings.threshold = parseFloat(b.dataset.th);
+      saveProgress();
+      renderMap();
+    });
+  });
+
+  // certificate actions
+  $("#cert-name").addEventListener("input", () => {
+    progress.settings.name = $("#cert-name").value.slice(0, 40);
+    saveProgress();
+    updateTgLink();
+  });
+  $("#cert-copy").addEventListener("click", copyReport);
+  $("#cert-png").addEventListener("click", downloadPNG);
+  $("#cert-map").addEventListener("click", goMap);
   document.addEventListener("keydown", (e) => {
     if (views.station.hidden) return;
     if ((e.key === "Enter" || e.key === "ArrowRight") && !$("#next-btn").hidden) {

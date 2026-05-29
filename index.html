@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&family=Lora:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap" rel="stylesheet" />
   <title>Русский язык · 10 класс — квест-тренажёр</title>
-  <link rel="stylesheet" href="styles.css?v=3" />
+  <link rel="stylesheet" href="styles.css?v=4" />
 </head>
 <body>
   <div class="aurora" aria-hidden="true">
@@ -60,7 +60,20 @@
 
       <div class="rank-banner" id="rank-banner" hidden></div>
 
+      <div class="settings" id="settings">
+        <span class="set-label">Порог открытия станции</span>
+        <div class="set-options" id="set-options" role="group" aria-label="Порог открытия станции">
+          <button type="button" data-th="0.5">½&nbsp;· 50%</button>
+          <button type="button" data-th="0.6">60%</button>
+          <button type="button" data-th="0.7">70%</button>
+          <button type="button" data-th="1">Все&nbsp;⭐</button>
+        </div>
+        <span class="set-hint" id="set-hint"></span>
+      </div>
+
       <div class="map-grid" id="map-grid" aria-label="Карта квеста"></div>
+
+      <div class="finale" id="finale"></div>
 
       <div class="map-footer">
         <button class="btn btn-ghost" id="reset-progress" type="button">Сбросить прогресс</button>
@@ -122,8 +135,35 @@
       </div>
     </section>
 
+    <!-- ===== FINAL CERTIFICATE ===== -->
+    <section class="view view-cert" id="view-certificate" hidden>
+      <div class="cert-wrap">
+        <div class="cert" id="cert">
+          <span class="cert-seal" aria-hidden="true">★</span>
+          <span class="cert-eyebrow">Учительская · подготовка к&nbsp;ЕГЭ</span>
+          <h2 class="cert-title">Грамота</h2>
+          <p class="cert-line">награждается</p>
+          <input class="cert-name" id="cert-name" type="text" maxlength="40" placeholder="впишите имя ученика" autocomplete="off" />
+          <p class="cert-line">за прохождение квеста<br><b>«Русский язык. 10&nbsp;класс»</b></p>
+          <div class="cert-stats">
+            <div class="cert-stat"><span id="cert-stars">0/100</span><small>звёзд</small></div>
+            <div class="cert-stat"><span id="cert-pct">0%</span><small>верных</small></div>
+            <div class="cert-stat"><span id="cert-rank">—</span><small>ранг</small></div>
+          </div>
+          <p class="cert-date" id="cert-date"></p>
+        </div>
+        <div class="cert-actions">
+          <button class="btn btn-primary" id="cert-copy" type="button">📋&nbsp;Скопировать результат</button>
+          <button class="btn btn-soft" id="cert-png" type="button">🖼&nbsp;Сохранить грамоту</button>
+          <a class="btn btn-soft" id="cert-tg" target="_blank" rel="noopener">✈️&nbsp;Отправить репетитору</a>
+          <button class="btn btn-ghost" id="cert-map" type="button">К&nbsp;карте</button>
+        </div>
+      </div>
+    </section>
+
   </div>
 
+  <div class="toast" id="toast" hidden></div>
   <canvas id="confetti" aria-hidden="true"></canvas>
 
   <a class="cta-sticky" href="https://t.me/ArinaGalitskaya" target="_blank" rel="noopener" aria-label="Записаться на занятие с Ариной в Telegram">
@@ -137,7 +177,7 @@
     <span class="cta-arrow" aria-hidden="true">→</span>
   </a>
 
-  <script src="data.js?v=3"></script>
-  <script src="app.js?v=3"></script>
+  <script src="data.js?v=4"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>

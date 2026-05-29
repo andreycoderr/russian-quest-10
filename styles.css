@@ -467,6 +467,112 @@ b { font-weight: 600; color: var(--text-strong); }
 #confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 70; }
 
 /* ============================================================
+   SETTINGS (unlock threshold)
+   ============================================================ */
+.settings {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 12px;
+  margin-bottom: 22px; padding: 13px 18px;
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  background: var(--surface); backdrop-filter: blur(8px);
+  animation: viewIn 0.5s both;
+}
+.set-label { font-family: var(--font-ui); font-weight: 700; font-size: 0.9rem; color: var(--text-strong); }
+.set-options { display: inline-flex; gap: 4px; background: var(--line); padding: 4px; border-radius: 100px; }
+.set-options button {
+  font: inherit; font-family: var(--font-ui); font-weight: 700; font-size: 0.84rem;
+  color: var(--muted); padding: 7px 14px; border: none; border-radius: 100px;
+  background: transparent; cursor: pointer; transition: color 0.2s, background 0.2s, box-shadow 0.2s; white-space: nowrap;
+}
+.set-options button:hover { color: var(--text-strong); }
+.set-options button.active { color: #2a1c06; background: linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow: var(--shadow-sm); }
+.set-hint { font-size: 0.82rem; color: var(--muted); margin-left: auto; }
+
+/* ============================================================
+   FINALE CARD
+   ============================================================ */
+.finale { margin-top: clamp(16px, 2.5vw, 24px); }
+.finale-card {
+  position: relative; overflow: hidden;
+  display: flex; align-items: center; gap: 18px;
+  width: 100%; text-align: left; font: inherit; color: inherit;
+  padding: 22px 26px; border-radius: var(--radius);
+  border: 1px solid var(--line); background: var(--surface); backdrop-filter: blur(12px);
+}
+.finale-card.locked { opacity: 0.85; cursor: not-allowed; }
+.finale-card.unlocked {
+  cursor: pointer;
+  border-color: rgba(243, 201, 105, 0.5);
+  background: linear-gradient(120deg, var(--accent-soft), transparent 70%);
+  box-shadow: var(--glow);
+}
+.finale-card.unlocked:hover { transform: translateY(-3px); transition: transform 0.25s; }
+.finale-trophy { font-size: 2.5rem; flex-shrink: 0; }
+.finale-card.unlocked .finale-trophy { animation: float 3s ease-in-out infinite; }
+@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+.finale-body { flex: 1; min-width: 0; }
+.finale-title { font-family: var(--font-display); font-weight: 700; font-size: 1.22rem; color: var(--text-strong); margin: 0 0 3px; }
+.finale-sub { font-size: 0.9rem; color: var(--muted); margin: 0; }
+.finale-bar { height: 6px; max-width: 340px; border-radius: 100px; background: var(--line); overflow: hidden; margin-top: 10px; }
+.finale-bar span { display: block; height: 100%; border-radius: 100px; background: linear-gradient(90deg, var(--accent-3), var(--accent)); transition: width 0.7s cubic-bezier(0.3,0.8,0.2,1); }
+.finale-go { flex-shrink: 0; font-family: var(--font-ui); font-weight: 800; color: var(--accent); font-size: 1.4rem; }
+
+/* ============================================================
+   CERTIFICATE
+   ============================================================ */
+.view-cert { display: flex; justify-content: center; padding-top: clamp(8px, 3vh, 32px); }
+.cert-wrap { width: 100%; max-width: 660px; }
+.cert {
+  position: relative; overflow: hidden; text-align: center;
+  padding: clamp(30px, 5vw, 52px) clamp(22px, 5vw, 46px);
+  border-radius: var(--radius);
+  background: linear-gradient(160deg, #fffdf6, #f1e6cb);
+  color: #2c2415;
+  border: 1px solid rgba(150, 110, 40, 0.45);
+  box-shadow: var(--shadow);
+  animation: resultIn 0.55s cubic-bezier(0.2,0.7,0.2,1);
+}
+.cert::before { content: ""; position: absolute; inset: 13px; border: 2px solid rgba(150, 110, 40, 0.35); border-radius: 13px; pointer-events: none; }
+.cert-seal {
+  position: absolute; bottom: 26px; right: 30px;
+  width: 56px; height: 56px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 1.5rem;
+  background: radial-gradient(circle at 35% 30%, #e8b85c, #a9701e);
+  box-shadow: 0 4px 14px rgba(120, 80, 20, 0.4);
+  transform: rotate(-8deg);
+}
+.cert-eyebrow { font-family: var(--font-ui); font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: #9a6a1f; }
+.cert-title { font-family: var(--font-display); font-weight: 700; font-size: clamp(2.2rem, 7vw, 3.1rem); margin: 6px 0 12px; color: #7a4e12; letter-spacing: 0.04em; }
+.cert-line { font-size: 1rem; color: #5c5142; margin: 6px 0; }
+.cert-name {
+  display: block; width: 100%; max-width: 440px; margin: 10px auto; text-align: center;
+  font-family: var(--font-display); font-style: italic; font-weight: 600; font-size: clamp(1.45rem, 4.5vw, 2.1rem);
+  color: #2c2415; background: transparent; border: none;
+  border-bottom: 2px dashed rgba(150, 110, 40, 0.55); padding: 6px 4px; outline: none;
+}
+.cert-name:focus { border-bottom-color: #a9701e; }
+.cert-name::placeholder { color: rgba(120, 90, 40, 0.4); font-weight: 500; }
+.cert-stats { display: flex; justify-content: center; gap: clamp(18px, 6vw, 48px); margin: 22px 0 8px; }
+.cert-stat { display: flex; flex-direction: column; gap: 2px; }
+.cert-stat span { font-family: var(--font-display); font-weight: 700; font-size: 1.55rem; color: #7a4e12; }
+.cert-stat small { font-family: var(--font-ui); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: #9a7d4a; }
+.cert-date { font-size: 0.85rem; color: #7a6a4a; margin: 12px 0 0; }
+.cert-actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 22px; }
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+.toast {
+  position: fixed; left: 50%; bottom: 92px; transform: translateX(-50%) translateY(12px);
+  z-index: 80; padding: 12px 20px; border-radius: 100px;
+  background: var(--surface-3); color: var(--text-strong);
+  border: 1px solid var(--line-strong); box-shadow: var(--shadow-sm); backdrop-filter: blur(10px);
+  font-family: var(--font-ui); font-weight: 700; font-size: 0.92rem;
+  opacity: 0; transition: opacity 0.3s, transform 0.3s; pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ============================================================
    STICKY CTA
    ============================================================ */
 .cta-sticky {
