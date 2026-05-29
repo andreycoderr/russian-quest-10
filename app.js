@@ -71,7 +71,7 @@
   }
 
   // ---------- views ----------
-  const views = { map: $("#view-map"), station: $("#view-station"), result: $("#view-result"), certificate: $("#view-certificate") };
+  const views = { map: $("#view-map"), station: $("#view-station"), result: $("#view-result"), certificate: $("#view-certificate"), analysis: $("#view-analysis") };
   function showView(name) {
     Object.keys(views).forEach(k => { views[k].hidden = (k !== name); });
     window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
@@ -212,9 +212,21 @@
   let cur = null;        // { index, station, order, qi, correct, streak, answered }
   let lastFinished = 0;  // index of last finished station (for result buttons)
 
+  const lastOrders = {}; // remember each station's previous question order
+  function sameOrder(a, b) { return a.length === b.length && a.every((v, i) => v === b[i]); }
+
   function openStation(index) {
     const station = STATIONS[index];
-    cur = { index, station, order: shuffle(station.questions.map((_, k) => k)), qi: 0, correct: 0, streak: 0, answered: false };
+    const base = station.questions.map((_, k) => k);
+    let order = shuffle(base);
+    // on replay, guarantee a visibly different order so positions aren't memorised
+    const prev = lastOrders[station.id];
+    if (prev && base.length > 2) {
+      let tries = 0;
+      while (sameOrder(order, prev) && tries < 10) { order = shuffle(base); tries++; }
+    }
+    lastOrders[station.id] = order.slice();
+    cur = { index, station, order, qi: 0, correct: 0, streak: 0, answered: false };
     $("#st-tag").textContent = station.tag;
     $("#st-tag").style.setProperty("--hue", station.hue);
     $("#st-name").textContent = station.title;
@@ -541,6 +553,92 @@
   }
 
   // ============================================================
+  //  ANALYSIS + RECOMMENDATIONS
+  // ============================================================
+  function analysisData() {
+    const items = STATIONS.map(s => {
+      const best = progress.best[s.id] || 0;
+      const total = s.questions.length;
+      return { s: s, best: best, total: total, pct: total ? best / total : 0 };
+    });
+    const weak = items.filter(x => x.pct < 1).sort((a, b) => a.pct - b.pct);
+    const strong = items.filter(x => x.pct === 1);
+    return { items: items, weak: weak, strong: strong };
+  }
+
+  function showAnalysis() {
+    const d = analysisData();
+    const earned = earnedStars();
+    const pct = TOTAL_Q ? Math.round(earned / TOTAL_Q * 100) : 0;
+    const rank = rankFor(earned);
+    $("#analysis-sub").innerHTML =
+      `Итог: <b>${earned} из ${TOTAL_Q}</b> ⭐ (${pct}%) · ранг «${rank ? rank.title : "—"}». ` +
+      (d.weak.length ? `Тем для повторения: <b>${d.weak.length}</b>.` : "Все темы пройдены идеально!");
+
+    let html = "";
+    if (!d.weak.length) {
+      html += `<div class="an-card"><p class="an-tip">Блестящий результат — ни одной ошибки! Можно переходить к разбору полных вариантов ЕГЭ и сочинению.</p></div>`;
+    } else {
+      html += `<h3 class="an-h an-h-weak">На что обратить внимание</h3>`;
+      d.weak.forEach(x => {
+        const pri = x.pct < 0.7;
+        html += `<div class="an-card${pri ? " pri" : ""}" style="--hue:${x.s.hue}">
+          <div class="an-top">
+            <span class="an-tag">${x.s.tag}</span>
+            <span class="an-name">${x.s.title}</span>
+            <span class="an-score">${x.best}/${x.total}${pri ? " · приоритет" : ""}</span>
+          </div>
+          <p class="an-tip">${x.s.tip}</p>
+        </div>`;
+      });
+    }
+    if (d.strong.length) {
+      html += `<h3 class="an-h an-h-strong">Уже на отлично</h3>
+        <div class="an-strong">` +
+        d.strong.map(x => `<span class="an-chip" style="--hue:${x.s.hue}">✓ ${x.s.title}</span>`).join("") +
+        `</div>`;
+    }
+    $("#analysis-body").innerHTML = html;
+    showView("analysis");
+  }
+
+  function buildRecommendations() {
+    const d = analysisData();
+    const earned = earnedStars();
+    const pct = TOTAL_Q ? Math.round(earned / TOTAL_Q * 100) : 0;
+    const name = (progress.settings.name || "").trim();
+    const L = ["📊 Рекомендации · Русский язык, 10 класс"];
+    if (name) L.push("Ученик: " + name);
+    L.push("Итог: " + earned + "/" + TOTAL_Q + " ⭐ (" + pct + "%)");
+    L.push("");
+    if (d.weak.length) {
+      L.push("Темы для повторения (от слабых к сильным):");
+      d.weak.forEach((x, i) => {
+        L.push((i + 1) + ". " + x.s.title + " — " + x.best + "/" + x.total + (x.pct < 0.7 ? " (приоритет)" : ""));
+        L.push("   → " + x.s.tip);
+      });
+    } else {
+      L.push("Ошибок нет — все темы пройдены идеально!");
+    }
+    if (d.strong.length) {
+      L.push("");
+      L.push("Уже на отлично: " + d.strong.map(x => x.s.title).join(", ") + ".");
+    }
+    L.push("");
+    L.push("Если по каким-то темам остаются сложности — обратитесь к Арине: https://t.me/ArinaGalitskaya");
+    L.push("Тренажёр «Учительская» · " + QUEST_URL);
+    return L.join("\n");
+  }
+
+  function copyRecommendations() {
+    const text = buildRecommendations();
+    const ok = () => toast("Рекомендации скопированы — можно отправить репетитору");
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(ok).catch(() => fallbackCopy(text, ok));
+    } else { fallbackCopy(text, ok); }
+  }
+
+  // ============================================================
   //  EVENTS (attached once — robust)
   // ============================================================
   $("#next-btn").addEventListener("click", nextQuestion);
@@ -575,6 +673,10 @@
   $("#cert-copy").addEventListener("click", copyReport);
   $("#cert-png").addEventListener("click", downloadPNG);
   $("#cert-map").addEventListener("click", goMap);
+  $("#cert-analysis").addEventListener("click", showAnalysis);
+  $("#analysis-copy").addEventListener("click", copyRecommendations);
+  $("#analysis-back").addEventListener("click", showCertificate);
+  $("#analysis-map").addEventListener("click", goMap);
   document.addEventListener("keydown", (e) => {
     if (views.station.hidden) return;
     if ((e.key === "Enter" || e.key === "ArrowRight") && !$("#next-btn").hidden) {

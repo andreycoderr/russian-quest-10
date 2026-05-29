@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&family=Lora:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap" rel="stylesheet" />
   <title>Русский язык · 10 класс — квест-тренажёр</title>
-  <link rel="stylesheet" href="styles.css?v=8" />
+  <link rel="stylesheet" href="styles.css?v=9" />
 </head>
 <body>
   <div class="aurora" aria-hidden="true">
@@ -161,10 +161,30 @@
           <p class="cert-date" id="cert-date"></p>
         </div>
         <div class="cert-actions">
-          <button class="btn btn-primary" id="cert-copy" type="button">📋&nbsp;Скопировать результат</button>
+          <button class="btn btn-primary btn-lg" id="cert-analysis" type="button">📊&nbsp;Рекомендации и&nbsp;разбор ошибок</button>
+          <button class="btn btn-soft" id="cert-copy" type="button">📋&nbsp;Скопировать результат</button>
           <button class="btn btn-soft" id="cert-png" type="button">🖼&nbsp;Сохранить грамоту</button>
           <a class="btn btn-soft" id="cert-tg" target="_blank" rel="noopener">✈️&nbsp;Отправить репетитору</a>
           <button class="btn btn-ghost" id="cert-map" type="button">К&nbsp;карте</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== ANALYSIS / RECOMMENDATIONS ===== -->
+    <section class="view view-analysis" id="view-analysis" hidden>
+      <div class="analysis-wrap">
+        <h2 class="analysis-title">Твой разбор и&nbsp;рекомендации</h2>
+        <p class="analysis-sub" id="analysis-sub"></p>
+        <div class="analysis-body" id="analysis-body"></div>
+        <div class="analysis-arina">
+          <span class="arina-ico" aria-hidden="true">💬</span>
+          <p>Если по&nbsp;каким-то темам остаются сложности — <b>обязательно обратись к&nbsp;Арине</b>. На&nbsp;занятии вы разберёте ошибки персонально и&nbsp;закроете пробелы.</p>
+          <a class="btn btn-primary" href="https://t.me/ArinaGalitskaya" target="_blank" rel="noopener">Написать Арине в&nbsp;Telegram</a>
+        </div>
+        <div class="analysis-actions">
+          <button class="btn btn-soft" id="analysis-copy" type="button">📋&nbsp;Скопировать рекомендации</button>
+          <button class="btn btn-ghost" id="analysis-back" type="button">← К&nbsp;грамоте</button>
+          <button class="btn btn-ghost" id="analysis-map" type="button">К&nbsp;карте</button>
         </div>
       </div>
     </section>
@@ -174,7 +194,7 @@
   <div class="toast" id="toast" hidden></div>
   <canvas id="confetti" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=8"></script>
-  <script src="app.js?v=8"></script>
+  <script src="data.js?v=9"></script>
+  <script src="app.js?v=9"></script>
 </body>
 </html>
