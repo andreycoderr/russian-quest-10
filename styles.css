@@ -133,8 +133,8 @@ b { font-weight: 600; color: var(--text-strong); }
 .muted { color: var(--muted); }
 
 /* view transition */
-.view { animation: viewIn 0.5s cubic-bezier(0.2, 0.7, 0.2, 1); }
-@keyframes viewIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.view { animation: viewIn 0.45s ease; }
+@keyframes viewIn { from { opacity: 0; } to { opacity: 1; } }
 
 /* ---------- BRAND BAR ---------- */
 .brandbar {
@@ -206,7 +206,7 @@ b { font-weight: 600; color: var(--text-strong); }
   align-items: center;
   gap: 11px;
   max-width: 54ch;
-  margin: 0 auto 22px;
+  margin: 0 auto 14px;
   padding: 12px 18px;
   text-align: center;
   font-size: 0.95rem;
@@ -225,6 +225,20 @@ b { font-weight: 600; color: var(--text-strong); }
   animation: noteBob 2.8s ease-in-out infinite;
 }
 @keyframes noteBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+.hero-reward {
+  max-width: 52ch;
+  margin: 0 auto 22px;
+  font-size: 0.97rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.hero-reward-ico { font-size: 1.08rem; }
+.hero-reward b {
+  font-weight: 700;
+  background: linear-gradient(100deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
 .hero-chips { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; justify-content: center; }
 .chip {
   font-family: var(--font-ui); font-size: 0.86rem; font-weight: 500;
@@ -637,32 +651,42 @@ b { font-weight: 600; color: var(--text-strong); }
 @media (max-width: 600px) {
   .hero { grid-template-columns: 1fr; }
   .progress-orb { justify-self: center; order: -1; }
-  .station-meta { margin: 0 auto; }
   .cta-sub { white-space: normal; }
   .page { padding-bottom: 22px; }
 
-  /* compact play screen so the whole question fits a phone */
-  .view-station .station-bar { margin-bottom: 8px; }
-  .view-station .track { margin-bottom: 12px; }
-  /* drop backdrop-filter: it makes the card a containing block and breaks the fixed button */
-  .view-station .card { padding: 15px 16px; backdrop-filter: none; background: var(--bg-2); }
+  /* put the full station name on its own row so it never gets cut off */
+  .view-station .station-bar { margin-bottom: 8px; flex-wrap: wrap; row-gap: 6px; }
+  .station-bar .hud { margin-left: auto; }
+  .station-meta { order: 1; flex-basis: 100%; margin: 2px 0 0; justify-content: center; }
+  .station-name { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.2; }
+
+  /* Full-height column: only the question card scrolls, while the "Следующий
+     вопрос" button stays pinned to its bottom — always tappable, no page scroll.
+     Sticky-in-the-card (not position:fixed) is immune to ancestor transforms
+     from the entrance / question-swap animations. */
+  .view-station { display: flex; flex-direction: column; min-height: calc(100svh - 40px); }
+  .view-station .content { flex: 1 1 auto; min-height: 0; display: flex; }
+  .view-station .track { margin-bottom: 12px; flex: 0 0 auto; }
+  .view-station .card {
+    flex: 1 1 auto; min-height: 0;
+    display: flex; flex-direction: column;
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding: 15px 16px; backdrop-filter: none; background: var(--bg-2);
+  }
   .question-head { margin-bottom: 5px; }
   .qtext { font-size: 1.05rem; line-height: 1.27; }
   .qpassage { padding: 9px 12px; font-size: 0.95rem; margin: 9px auto 2px; }
   .board { gap: 8px; margin-top: 11px; }
   .option { padding: 11px 14px; font-size: 0.96rem; }
   .board-compact .option { padding: 12px; font-size: 1.16rem; }
-  .feedback { margin-top: 10px; padding: 11px 14px; max-height: 30vh; overflow-y: auto; }
+  .feedback { margin-top: 10px; padding: 11px 14px; }
   .fb-body { font-size: 0.9rem; }
-  .view-station .controls { margin-top: 12px; }
-
-  /* "Следующий вопрос" pinned to the bottom — always tappable, no scrolling */
-  .view-station #next-btn {
-    position: fixed; left: 14px; right: 14px; bottom: calc(12px + env(safe-area-inset-bottom));
-    width: auto; z-index: 30; justify-content: center;
-    box-shadow: var(--glow), 0 8px 24px rgba(0,0,0,0.45);
+  .view-station .controls {
+    position: sticky; bottom: 0; margin-top: auto;
+    padding: 10px 0 2px; background: var(--bg-2); z-index: 5;
+    box-shadow: 0 -12px 14px -10px rgba(0,0,0,0.4);
   }
-  .view-station .content { padding-bottom: 74px; }
+  .view-station #next-btn { width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
